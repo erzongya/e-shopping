@@ -1,0 +1,25 @@
+
+2026-07-14 18:25:30,762 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:30,793 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:34,034 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:34,047 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:37,308 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:37,321 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:43,189 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:43,203 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:50,573 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:50,586 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:56,352 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:25:56,364 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:26:27,336 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:26:27,361 | ERROR | trace_id=unknown | session_id= | msg=系统异常:'NoneType' object has no attribute 'incr'
+2026-07-14 18:28:19,104 | ERROR | trace_id=1f46c9cc-7763-4313-b74e-1be83e4fa9fe | session_id=1-213123123 | msg=系统异常:Error code: 400 - {'error': {'message': "Messages with role 'tool' must be a response to a preceding message with 'tool_calls'", 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}
+2026-07-14 18:34:27,776 | ERROR | trace_id=e4a3983f-25b2-4433-8bd7-9157b81cab65 | session_id=123123 | msg=系统异常:Error code: 400 - {'error': {'message': "Messages with role 'tool' must be a response to a preceding message with 'tool_calls'", 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}
+2026-07-14 18:34:43,527 | ERROR | trace_id=0ce35d96-208c-458c-ad29-0f604f3e8971 | session_id=123123 | msg=系统异常:Error code: 400 - {'error': {'message': "Messages with role 'tool' must be a response to a preceding message with 'tool_calls'", 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}
+2026-07-14 18:47:45,848 | ERROR | trace_id=f847239b-9b1e-4286-91f0-10e64737642b | session_id=111 | msg=系统异常:Error code: 400 - {'error': {'message': "Messages with role 'tool' must be a response to a preceding message with 'tool_calls'", 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}
+2026-07-14 19:01:13,323 | ERROR | trace_id=92df2e68-3e86-429a-853e-eefdf53be307 | session_id=1 | msg=系统异常:-1
+2026-07-14 19:02:25,520 | ERROR | trace_id=78190154-9d4f-4204-8bef-b7129a71f132 | session_id=1 | msg=系统异常:-1
+2026-07-14 19:25:20,161 | ERROR | trace_id=45354ab0-52c8-43df-9181-124fbf5b74e1 | session_id=1 | msg=系统异常:Error code: 400 - {'error': {'message': "Messages with role 'tool' must be a response to a preceding message with 'tool_calls'", 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}
+2026-07-14 20:50:26,886 | ERROR | trace_id=4f9dfa7b-9fe8-4b99-832b-030e28e9c95a | session_id=1 | msg=系统异常:Error code: 400 - {'error': {'message': "Messages with role 'tool' must be a response to a preceding message with 'tool_calls'", 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}
+2026-07-14 20:58:09,192 | ERROR | trace_id=7a21a704-c8fd-4d67-8362-5295cb182096 | session_id=1 | msg=系统异常:Error code: 400 - {'error': {'message': "Messages with role 'tool' must be a response to a preceding message with 'tool_calls'", 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}
+2026-07-14 20:59:28,837 | ERROR | trace_id=9c01bc31-c88f-43e2-a549-50dfbc795381 | session_id=1 | msg=系统异常:Error code: 400 - {'error': {'message': "Messages with role 'tool' must be a response to a preceding message with 'tool_calls'", 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}

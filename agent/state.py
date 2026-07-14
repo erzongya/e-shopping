@@ -1,4 +1,4 @@
-from typing import TypedDict,Annotated,Sequence
+from typing import TypedDict,Annotated,Sequence,Dict
 import operator
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
@@ -7,7 +7,7 @@ from langgraph.graph.message import add_messages
 # Sequence 通用有序可迭代序列（list/tuple/ 字符串）
 
 class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], add_messages]
+    messages: Annotated[Sequence[BaseMessage], operator.add]
     goods_ids: list[str]
     goods_info: list[dict]
 

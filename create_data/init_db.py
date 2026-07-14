@@ -2,9 +2,8 @@
 from database.db import engine
 # 导入数据表基类（包含所有表元数据）
 from db.base import Base
-import db.models
 #日志打印
-from utils.logger import logger
+from common.logger import logger
 
 def create_tables():
     # 扫描所有继承Base的数据模型，不存在则自动创建数据表

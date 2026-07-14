@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 class Settings(BaseSettings):
     # 环境模式
     model_config = SettingsConfigDict(extra="ignore")
-    ENVIRONMENT: Literal["dev", "prod"] = os.getenv("ENVIRONMENT", "dev")
+    ENV: Literal["dev", "prod"] = os.getenv("ENVIRONMENT", "dev")
     DEBUG: bool = os.getenv("DEBUG", "true") == "true"
 
     # 模型切换开关
@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     EMBED_API_KEY: str
     EMBED_MODEL: str
 
+    # 服务配置
+    HOST:str
+    PORT:int
+    REDIS_HOST:str
+    REDIS_PORT:int
+    REDIS_DB:int
+    SESSION_TTL:int
     @property
     def is_dev(self) -> bool:
         return self.ENVIRONMENT == "dev"

@@ -12,7 +12,6 @@ if __name__ == "__main__":
         if not user_in:
             print("请输入内容\n")
             continue
-
         session_state["messages"].append(HumanMessage(content=user_in))
         # 极简打印执行节点
         print("执行节点：", end="")
