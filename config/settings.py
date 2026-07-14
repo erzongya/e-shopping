@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
+# 获取项目根目录（settings.py所在文件夹的上一层 = 项目根）
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class Settings(BaseSettings):
     # 环境模式
@@ -31,10 +33,6 @@ class Settings(BaseSettings):
     EMBED_API_KEY: str
     EMBED_MODEL: str
 
-    # 本地持久化存储（永久固定）
-    DB_URL: str
-    VECTOR_STORE_ROOT: str
-
     @property
     def is_dev(self) -> bool:
         return self.ENVIRONMENT == "dev"
@@ -43,5 +41,17 @@ class Settings(BaseSettings):
     def is_prod(self) -> bool:
         return self.ENVIRONMENT == "prod"
 
+    @property
+    def DB_URL(self):
+        """数据库路径"""
+        db_file = os.path.join(BASE_DIR, "data", "ecom.db")
+        return f"sqlite:///{db_file}"
+
+    @property
+    def VECTOR_STORE_ROOT(self):
+        """向量库存放目录绝对路径"""
+        return os.path.join(BASE_DIR, "data", "vector_store")
+
 settings = Settings()
-print(settings)
+if __name__ == '__main__':
+    print(settings)
