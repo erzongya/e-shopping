@@ -16,7 +16,7 @@ def search_similar_goods(query: str,top_k: int = 3) -> str:
     try:
         res = search_goods_vector(query,top_k)
         ids = res['ids'][0]
-        return str(ids)
+        return ids
     except Exception as e:
         return f"工具异常：{str(e)}"
 
@@ -44,7 +44,7 @@ def get_goods_detail(goods_id: str) -> str:
             }
             for g in goods
         ]
-        return str(data)
+        return data
     except Exception as e:
         return f"工具异常：{str(e)}"
 
@@ -68,7 +68,7 @@ def filter_goods(goods_list: list[dict], min_price: float = None, max_price: flo
             if max_price is not None and item["price"] > max_price:
                 continue
             res.append(item)
-        return str(res)
+        return res
     except Exception as e:
         return f"工具异常：{str(e)}"
 
@@ -93,7 +93,7 @@ def query_order(order_no: str) -> str:
             "real_pay": float(order.real_pay),
             "status": order.status
         }
-        return str(order_data)
+        return order_data
     except Exception as e:
         return f"工具异常：{str(e)}"
 

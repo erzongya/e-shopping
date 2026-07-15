@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     REDIS_HOST:str
     REDIS_PORT:int
     REDIS_DB:int
-    SESSION_TTL:int
+    CHECKPOINT_KEY_PREFIX:str
     @property
     def is_dev(self) -> bool:
         return self.ENVIRONMENT == "dev"

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Header, Request
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
-from agent.graph import graph
 from common.exception import BizErr, ErrCode
 from common.logger import log_info
 from agent.state import AgentState
-
+from agent.graph import create_agent_graph
+from mcp_server.mcp_client import mcp_manager
 # 创建路由实例
 router = APIRouter(prefix="/chat", tags=["对话接口"])
 
@@ -35,7 +35,11 @@ async def chat(
         "goods_ids": [],
         "goods_info": []
     }
-    resp = graph.invoke(input_state, config=config)
+    # 从app.state取graph，中间件已保证一定存在
+    tools = mcp_manager.get_tools()
+    graph = create_agent_graph(tools)
+
+    resp = await graph.ainvoke(input_state, config=config)
 
     log_info(trace_id, X_Session_Id, "AI回复完成")
     return {
