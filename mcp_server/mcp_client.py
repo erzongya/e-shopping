@@ -1,66 +1,66 @@
+# mcp_server/client/manager.py
 import asyncio
-import logging
+from typing import List, Dict
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from common.exception import BizErr, ErrCode
+from common.logger import log_error
 
-log = logging.getLogger("mcp-manager")
-
+# MCP集群配置（与各域MCP端口token一一对应）
 MCP_SERVER_LIST = [
-    {
-        "name": "goods_mcp",
-        "url": "http://127.0.0.1:8001/mcp",
-        "transport": "streamable-http",
-        "token": "goods_2026_secret"
-    },
-    {
-        "name": "order_mcp",
-        "url": "http://127.0.0.1:8002/mcp",
-        "transport": "streamable-http",
-        "token": "order_2026_secret"
-    },
-    {
-        "name": "ops_mcp",
-        "url": "http://127.0.0.1:8003/mcp",
-        "transport": "streamable-http",
-        "token": "ops_2026_secret"
-    }
+    {"name": "goods_mcp", "url": "http://127.0.0.1:8001/mcp", "transport": "streamable-http", "token": "goods_2026_secret"},
+    {"name": "order_mcp", "url": "http://127.0.0.1:8002/mcp", "transport": "streamable-http", "token": "order_2026_secret"},
+    {"name": "ops_mcp", "url": "http://127.0.0.1:8003/mcp", "transport": "streamable-http", "token": "ops_2026_secret"},
 ]
 
 class MCPManager:
     def __init__(self):
-        self._tools = None
+        self._tools: List | None = None
+        self._server_status: List[Dict] = []
 
-    async def initialize(self):
-        if self._tools is None:
-            self._tools = await self._async_load()
-        return self._tools
-
-    async def _async_load(self):
+    async def initialize(self) -> List:
         if self._tools is not None:
             return self._tools
-        total_tools = []
-        for server in MCP_SERVER_LIST:
-            cfg = {
-                server["name"]: {
-                    "url": server["url"],
-                    "transport": server["transport"],
-                    "headers": {
-                        "Authorization": f"Bearer {server['token']}",
-                        "Accept": "text/event-stream"
-                    }
+        self._tools = await self._load_all()
+        return self._tools
+
+    async def _load_all(self) -> List:
+        all_tools = []
+        self._server_status.clear()
+
+        for cfg in MCP_SERVER_LIST:
+            svc_name = cfg["name"]
+            # 抽离统一构造配置，消除重复字典代码
+            client_cfg = {
+                svc_name: {
+                    "url": cfg["url"],
+                    "transport": cfg["transport"],
+                    "headers": {"Authorization": f"Bearer {cfg['token']}", "Accept": "text/event-stream"}
                 }
             }
-            client = MultiServerMCPClient(cfg)
-            tools = await client.get_tools()
-            total_tools.extend(tools)
-            log.info(f"加载成功：{server['name']}")
-            await asyncio.sleep(0.03)
-        log.info(f"MCP加载完成，工具总数：{len(total_tools)}")
-        self._tools = total_tools
-        return self._tools
+            status = {"name": svc_name, "healthy": False, "tool_count": 0}
+            try:
+                tools = await MultiServerMCPClient(client_cfg).get_tools()
+                all_tools.extend(tools)
+                status.update({"healthy": True, "tool_count": len(tools)})
+                print(f"[MCP] {svc_name} 连接成功，工具数量:{len(tools)}")
+            except Exception as e:
+                print(f"[MCP] {svc_name} 连接失败: {str(e)}")
+            self._server_status.append(status)
 
-    def get_tools(self):
+        offline = self.get_offline_servers()
+        if offline:
+            print(f"[MCP] 离线服务: {offline}")
+        print(f"[MCP] 加载完成，总可用工具:{len(all_tools)}")
+        return all_tools
+
+    def get_tools(self) -> List:
         if self._tools is None:
-            raise RuntimeError("MCP未初始化")
+            raise BizErr(ErrCode.MCP_CONNECT_FAIL, "MCP服务未初始化，请先执行initialize")
         return self._tools
 
+    def get_offline_servers(self) -> List[str]:
+        return [s["name"] for s in self._server_status if not s["healthy"]]
+
+
+# 全局单例
 mcp_manager = MCPManager()

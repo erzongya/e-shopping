@@ -10,5 +10,6 @@ class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], operator.add]
     goods_ids: list[str]
     goods_info: list[dict]
+    too_call_round:int #记录工具调用次数
 
 

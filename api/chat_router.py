@@ -32,6 +32,7 @@ async def chat(
 
     input_state: AgentState = {
         "messages": [HumanMessage(content=req.question)],
+        "tool_call_round": 0,
         "goods_ids": [],
         "goods_info": []
     }

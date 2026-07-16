@@ -5,7 +5,6 @@ from common.middleware import TraceMiddleware
 from common.exception import global_handler
 from api import chat_router
 from mcp_server.mcp_client import mcp_manager
-import asyncio
 from agent.graph import create_agent_graph
 from contextlib import asynccontextmanager
 

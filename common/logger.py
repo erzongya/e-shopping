@@ -14,7 +14,7 @@ try:
     if not os.path.exists(LOG_PATH):
         os.makedirs(LOG_PATH)
 except Exception as err:
-    print("❌ 创建文件夹失败，错误详情：", repr(err))
+    print("❌ 创建文件夹失败，错误详情：", str(err))
 
 ERROR_LOG_FILE = os.path.join(LOG_PATH, "error.log")
 
@@ -27,10 +27,8 @@ while logger.handlers:
 # 全局日志等级
 if settings.ENV == "dev":
     logger.setLevel(logging.DEBUG)
-    print("✅ 全局等级 DEBUG")
 else:
     logger.setLevel(logging.INFO)
-    print("ℹ️ 全局等级 INFO")
 
 # 原生文本格式，无第三方依赖
 log_fmt = logging.Formatter(
@@ -42,11 +40,11 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(log_fmt)
 if settings.ENV == "dev":
     console_handler.setLevel(logging.DEBUG)
-    print("✅ 控制台等级 DEBUG，info日志正常输出")
+    print("【日志】当前环境==>开发环境")
 else:
     # 生产环境只打印错误
     console_handler.setLevel(logging.ERROR)
-    print("ℹ️ 控制台等级 ERROR，屏蔽info日志")
+    print("【日志】当前环境==>生产环境")
 logger.addHandler(console_handler)
 
 # 2. 文件处理器：只存ERROR日志
@@ -94,6 +92,7 @@ def log_error(trace_id: str, session_id: str, msg: str, err: Exception = None):
             "stack": stack_info
         }
     )
+
 
 # 自测入口，直接运行本文件测试
 if __name__ == '__main__':
