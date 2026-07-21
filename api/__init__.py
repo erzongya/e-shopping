@@ -1,3 +1,2 @@
-from api.chat_router import router as chat_router
+from api.chat import router as chat_router
 
-__all__ = ["chat_router"]

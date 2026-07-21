@@ -7,9 +7,9 @@ from langgraph.graph.message import add_messages
 # Sequence 通用有序可迭代序列（list/tuple/ 字符串）
 
 class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.add]
+    messages: Annotated[Sequence[BaseMessage], add_messages]
     goods_ids: list[str]
     goods_info: list[dict]
-    too_call_round:int #记录工具调用次数
-
+    # 初始值 = 0，每次更新执行相加
+    tool_call_round: Annotated[int, operator.add, 0]
 

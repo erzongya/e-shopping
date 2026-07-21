@@ -1,76 +1,113 @@
 import logging
 import os
+import re
 import traceback
 from logging.handlers import TimedRotatingFileHandler
+from typing import Optional
+from threading import Lock
 from config.settings import settings, BASE_DIR
 
-# 日志路径
-LOG_PATH = os.path.join(BASE_DIR, 'logs')
-print(f"BASE_DIR = {BASE_DIR}")
-print(f"LOG_PATH = {LOG_PATH}")
+# ==================== 常量 ====================
+LOG_DIR_NAME = "logs"
+ERROR_LOG_NAME = "error.log"
+LOG_ROTATE_INTERVAL = 1
+LOG_BACKUP_DAYS = 14
+LOG_ENCODING = "utf-8"
+LOGGER_NAME = "ecommerce_agent"
 
-# 创建文件夹带打印
-try:
-    if not os.path.exists(LOG_PATH):
-        os.makedirs(LOG_PATH)
-except Exception as err:
-    print("❌ 创建文件夹失败，错误详情：", str(err))
+LOG_PATH = os.path.join(BASE_DIR, LOG_DIR_NAME)
+ERROR_LOG_FILE = os.path.join(LOG_PATH, ERROR_LOG_NAME)
 
-ERROR_LOG_FILE = os.path.join(LOG_PATH, "error.log")
+print(f"[LOG CONFIG] BASE_DIR = {BASE_DIR}")
+print(f"[LOG CONFIG] LOG_PATH = {LOG_PATH}")
 
-# 日志实例初始化
-logger = logging.getLogger("agent")
-# 彻底清空旧handler，避免缓存干扰
-while logger.handlers:
-    logger.handlers.pop()
+# ==================== 全局锁 + 初始化标记（核心防重复） ====================
+_INIT_LOCK = Lock()
+_IS_LOG_INITIALIZED = False
 
-# 全局日志等级
-if settings.ENV == "dev":
-    logger.setLevel(logging.DEBUG)
-else:
-    logger.setLevel(logging.INFO)
+# ==================== 创建日志目录 ====================
+def init_log_dir() -> None:
+    try:
+        if not os.path.exists(LOG_PATH):
+            os.makedirs(LOG_PATH, mode=0o755)
+            print(f"[LOG CONFIG] 创建日志目录成功: {LOG_PATH}")
+    except Exception as err:
+        traceback.print_exc()
+        raise RuntimeError(f"日志目录创建失败: {err}") from err
 
-# 原生文本格式，无第三方依赖
-log_fmt = logging.Formatter(
-    "%(asctime)s | %(levelname)s | trace_id=%(trace_id)s | session_id=%(session_id)s | msg=%(message)s"
-)
+init_log_dir()
 
-# 1. 控制台处理器
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(log_fmt)
-if settings.ENV == "dev":
-    console_handler.setLevel(logging.DEBUG)
-    print("【日志】当前环境==>开发环境")
-else:
-    # 生产环境只打印错误
-    console_handler.setLevel(logging.ERROR)
-    print("【日志】当前环境==>生产环境")
-logger.addHandler(console_handler)
+# ==================== 预编译脱敏正则 ====================
+PHONE_PATTERN = re.compile(r"(1[3-9]\d)\d{4}(\d{4})")
+ID_CARD_PATTERN = re.compile(r"(\d{6})\d{8}(\d{4})")
 
-# 2. 文件处理器：只存ERROR日志
-file_handler = TimedRotatingFileHandler(
-    filename=ERROR_LOG_FILE,
-    when="D",
-    interval=1,
-    backupCount=14,
-    encoding="utf-8"
-)
-file_handler.setLevel(logging.ERROR)
-file_handler.setFormatter(log_fmt)
-logger.addHandler(file_handler)
-
-# 隐私脱敏
 def safe_desensitize(text: str) -> str:
-    import re
-    text = re.sub(r"(1[3-9]\d)\d{4}(\d{4})", r"\1****\2", text)
-    text = re.sub(r"(\d{6})\d{8}(\d{4})", r"\1********\2", text)
+    if not isinstance(text, str):
+        text = str(text)
+    text = PHONE_PATTERN.sub(r"\1****\2", text)
+    text = ID_CARD_PATTERN.sub(r"\1********\2", text)
     return text
 
-# 普通信息日志（仅控制台输出，不写入文件）
-def log_info(trace_id: str, session_id: str, msg: str):
-    msg = safe_desensitize(msg)
-    logger.info(
-        msg,
+# ==================== 初始化logger（加锁只执行一次） ====================
+def get_logger():
+    global _IS_LOG_INITIALIZED
+    logger = logging.getLogger(LOGGER_NAME)
+
+    with _INIT_LOCK:
+        # 已经初始化过，直接返回，不再新增handler
+        if _IS_LOG_INITIALIZED:
+            return logger
+
+        # 清空已有handler
+        logger.handlers.clear()
+
+        # 设置日志等级
+        if settings.ENV == "dev":
+            global_level = logging.DEBUG
+            console_level = logging.DEBUG
+            print("【LOG ENV】开发环境：控制台输出DEBUG及以上")
+        else:
+            global_level = logging.INFO
+            console_level = logging.ERROR
+            print("【LOG ENV】生产环境：控制台仅输出ERROR")
+
+        logger.setLevel(global_level)
+        logger.propagate = False  # 禁止日志向上传递到根logger，双重打印元凶之一
+
+        log_format = logging.Formatter(
+            "%(asctime)s | %(levelname)-8s | trace_id=%(trace_id)s | session_id=%(session_id)s | stack=%(stack)s | msg=%(message)s"
+        )
+
+        # 控制台handler
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(log_format)
+        console_handler.setLevel(console_level)
+        logger.addHandler(console_handler)
+
+        # 错误文件handler
+        file_handler = TimedRotatingFileHandler(
+            filename=ERROR_LOG_FILE,
+            when="D",
+            interval=LOG_ROTATE_INTERVAL,
+            backupCount=LOG_BACKUP_DAYS,
+            encoding=LOG_ENCODING
+        )
+        file_handler.setLevel(logging.ERROR)
+        file_handler.setFormatter(log_format)
+        logger.addHandler(file_handler)
+
+        # 标记初始化完成
+        _IS_LOG_INITIALIZED = True
+    return logger
+
+# 拿到全局logger实例
+_root_logger = get_logger()
+
+# ==================== 对外工具函数 ====================
+def log_info(trace_id: str, session_id: str, msg: str) -> None:
+    safe_msg = safe_desensitize(msg)
+    _root_logger.info(
+        safe_msg,
         extra={
             "trace_id": trace_id,
             "session_id": session_id,
@@ -78,14 +115,13 @@ def log_info(trace_id: str, session_id: str, msg: str):
         }
     )
 
-# 错误日志（控制台+文件双存）
-def log_error(trace_id: str, session_id: str, msg: str, err: Exception = None):
-    msg = safe_desensitize(msg)
+def log_error(trace_id: str, session_id: str, msg: str, err: Optional[Exception] = None) -> None:
+    safe_msg = safe_desensitize(msg)
     stack_info = ""
-    if err:
-        stack_info = "".join(traceback.format_exception(type(err), err, err.__traceback__))
-    logger.error(
-        msg,
+    if err is not None:
+        stack_info = "".join(traceback.format_exception(type(err), err, err.__traceback__)).strip()
+    _root_logger.error(
+        safe_msg,
         extra={
             "trace_id": trace_id,
             "session_id": session_id,
@@ -93,16 +129,10 @@ def log_error(trace_id: str, session_id: str, msg: str, err: Exception = None):
         }
     )
 
-
-# 自测入口，直接运行本文件测试
-if __name__ == '__main__':
-    print("=====开始测试日志=====")
-    trace_id = "test_trace_001"
-    session_id = "test_sid_999"
-    # 测试info日志
-    log_info(trace_id, session_id, "用户查询商品，手机号13812345678，身份证310101199001011234")
-    # 测试错误日志
+# 自测
+if __name__ == "__main__":
+    log_info("test_trace", "test_sid", "测试日志 手机号13812341111")
     try:
-        num = 1 / 0
+        1 / 0
     except Exception as e:
-        log_error(trace_id, session_id, "计算除数为0，系统异常", e)
+        log_error("test_trace", "test_sid", "测试异常", e)
