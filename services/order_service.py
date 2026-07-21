@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from db.models import Order,Goods
-from utils.logger import logger
+from common.logger import logger
 
 
 def create_order(db:Session,user_id:str,goods_id:int,pay_price:float):

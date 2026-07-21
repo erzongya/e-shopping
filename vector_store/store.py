@@ -1,5 +1,5 @@
 from chromadb import PersistentClient
-from utils.llm_factory import get_embedding_model
+from common.llm_factory import get_embedding_model
 from config.settings import settings
 # 创建本地持久化向量库实例，数据存在配置指定文件夹
 client = PersistentClient(path=settings.VECTOR_STORE_ROOT)

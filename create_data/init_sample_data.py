@@ -2,8 +2,7 @@ from database.db import SessionLocal
 from db.models import Goods,Order
 from services.goods_sevice import get_all_goods
 from vector_store.store import add_goods_vector
-from utils.logger import logger
-import datetime
+from common.logger import logger
 
 #1 测试商品数据
 sample_goods = [
