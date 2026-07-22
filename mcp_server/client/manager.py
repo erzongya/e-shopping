@@ -1,86 +1,111 @@
 # mcp_server/client/manager.py
+
 import asyncio
-from typing import List, Dict
+from typing import List, Dict, Optional
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from common.exception import BizErr, ErrCode
 from common.logger import log_error
 
-# 删掉token字段
-MCP_SERVER_LIST = [
-    {"name": "goods_mcp", "url": "http://127.0.0.1:8001/mcp", "transport": "streamable-http"},
-    {"name": "order_mcp", "url": "http://127.0.0.1:8002/mcp", "transport": "streamable-http"},
-    {"name": "ops_mcp", "url": "http://127.0.0.1:8003/mcp", "transport": "streamable-http"},
-    {"name": "cart_mcp", "url": "http://127.0.0.1:8004/mcp", "transport": "streamable-http"},
-    {"name": "user_mcp", "url": "http://127.0.0.1:8005/mcp", "transport": "streamable-http"},
-    {"name": "promotion_mcp", "url": "http://127.0.0.1:8006/mcp", "transport": "streamable-http"},
-    {"name": "aftersale_mcp", "url": "http://127.0.0.1:8007/mcp", "transport": "streamable-http"},
-    {"name": "admin_mcp", "url": "http://127.0.0.1:8008/mcp", "transport": "streamable-http"},
+MCP_SERVERS = [
+    {"name": "goods_mcp", "url": "http://127.0.0.1:8001/mcp"},
+    {"name": "order_mcp", "url": "http://127.0.0.1:8002/mcp"},
+    {"name": "ops_mcp", "url": "http://127.0.0.1:8003/mcp"},
+    {"name": "cart_mcp", "url": "http://127.0.0.1:8004/mcp"},
+    {"name": "user_mcp", "url": "http://127.0.0.1:8005/mcp"},
+    {"name": "promotion_mcp", "url": "http://127.0.0.1:8006/mcp"},
+    {"name": "aftersale_mcp", "url": "http://127.0.0.1:8007/mcp"},
+    {"name": "admin_mcp", "url": "http://127.0.0.1:8008/mcp"},
 ]
+
 
 class MCPManager:
     def __init__(self):
-        self._tools: List | None = None
-        self._server_status: List[Dict] = []
+        self._tools: Optional[List] = None
+        self._tools_meta: Dict = {}
+        self._offline_servers: List[str] = []
 
     async def initialize(self) -> List:
+        """加载所有MCP工具"""
         if self._tools is not None:
             return self._tools
-        self._tools = await self._load_all()
+
+        self._tools = []
+        self._tools_meta = {}
+        self._offline_servers = []
+
+        for server in MCP_SERVERS:
+            tools = await self._connect_server(server)
+            if tools:
+                self._tools.extend(tools)
+                self._cache_tools_meta(tools)
+            else:
+                self._offline_servers.append(server["name"])
+
+        print(f"[MCP] 加载完成: {len(self._tools)} 个工具, 离线服务: {self._offline_servers}")
         return self._tools
 
-    async def _load_all(self) -> List:
-        all_tools = []
-        self._server_status.clear()
-        retry_times = 2
-
-        for cfg in MCP_SERVER_LIST:
-            svc_name = cfg["name"]
-            # 移除Bearer鉴权头，只保留SSE必须请求头
-            client_cfg = {
-                svc_name: {
-                    "url": cfg["url"],
-                    "transport": cfg["transport"],
-                    "headers": {
-                        "Accept": "text/event-stream",
-                        "Cache-Control": "no-cache",
-                        "Connection": "keep-alive"
-                    }
-                }
+    async def _connect_server(self, server: dict) -> Optional[List]:
+        """连接单个MCP服务"""
+        name, url = server["name"], server["url"]
+        config = {
+            name: {
+                "url": url,
+                "transport": "streamable-http",
+                "headers": {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
             }
-            status = {"name": svc_name, "healthy": False, "tool_count": 0}
-            tools = None
+        }
 
-            # 重试连接逻辑保持原样
-            for i in range(retry_times + 1):
-                try:
-                    tools = await MultiServerMCPClient(client_cfg).get_tools()
-                    break
-                except Exception as e:
-                    err_msg = f"[MCP-CLIENT] {svc_name} 第{i + 1}次连接失败: {str(e)}"
-                    print(err_msg)
-                    log_error("", "system_mcp_manager", err_msg, e)
-                    if i != retry_times:
-                        await asyncio.sleep(1)
+        for attempt in range(3):
+            try:
+                tools = await MultiServerMCPClient(config).get_tools()
+                print(f"[MCP] ✅ {name} 连接成功, {len(tools)} 个工具")
+                return tools
+            except Exception as e:
+                print(f"[MCP] ⚠️ {name} 第{attempt + 1}次连接失败")
+                log_error("", "mcp_manager", f"{name}连接失败", e)
+                if attempt < 2:
+                    await asyncio.sleep(1)
 
-            if tools is not None:
-                all_tools.extend(tools)
-                status.update({"healthy": True, "tool_count": len(tools)})
-                print(f"[MCP-CLIENT] {svc_name} 连接成功，工具数量:{len(tools)}")
-            self._server_status.append(status)
+        print(f"[MCP] ❌ {name} 连接失败")
+        return None
 
-        offline = self.get_offline_servers()
-        if offline:
-            print(f"[MCP-CLIENT] 离线服务列表: {offline}")
-        print(f"[MCP-CLIENT] 全部MCP加载完成，总可用工具:{len(all_tools)}")
-        return all_tools
+    def _cache_tools_meta(self, tools: List):
+        """缓存工具元数据"""
+        for tool in tools:
+            # 获取 schema（MCP Adapter 返回的已经是字典）
+            schema = {}
+            if hasattr(tool, "args_schema") and isinstance(tool.args_schema, dict):
+                schema = tool.args_schema
+            if schema.get("properties", {}).keys() == {"kwargs"}:
+                schema = {
+                    "type": "object",
+                    "properties": {
+                        "params": {
+                            "type": "object",
+                            "description": "业务参数（JSON对象）"
+                        }
+                    },
+                    "required": ["params"]
+                }
+            # 如果 schema 为空，用默认值
+            if not schema:
+                schema = {"type": "object", "properties": {}}
+
+            self._tools_meta[tool.name] = {
+                "description": tool.description or f"{tool.name}工具",
+                "schema": schema
+            }
 
     def get_tools(self) -> List:
         if self._tools is None:
-            raise BizErr(ErrCode.MCP_CONNECT_FAIL, "MCP服务未初始化，请先执行initialize")
+            raise BizErr(ErrCode.MCP_CONNECT_FAIL, "MCP未初始化")
         return self._tools
 
-    def get_offline_servers(self) -> List[str]:
-        return [s["name"] for s in self._server_status if not s["healthy"]]
+    def get_tools_meta(self) -> Dict:
+        return self._tools_meta
 
-# 全局单例
+    def get_offline_servers(self) -> List[str]:
+        return self._offline_servers
+
+
 mcp_manager = MCPManager()

@@ -6,14 +6,14 @@ from typing import List, Tuple
 # ===================== 服务配置 =====================
 # MCP模块列表 格式：(服务名, [python, -m, 包.模块名])
 MCP_SERVICE_LIST: List[Tuple[str, List[str]]] = [
-    ("goods_mcp", [sys.executable, "-m", "mcp_server.goods_mcp"]),
-    ("order_mcp", [sys.executable, "-m", "mcp_server.order_mcp"]),
-    ("ops_mcp", [sys.executable, "-m", "mcp_server.ops_mcp"]),
-    ("cart_mcp", [sys.executable, "-m", "mcp_server.cart_mcp"]),
-    ("user_mcp", [sys.executable, "-m", "mcp_server.user_mcp"]),
-    ("promotion_mcp", [sys.executable, "-m", "mcp_server.promoption_mcp"]),
-    ("aftersale_mcp", [sys.executable, "-m", "mcp_server.aftersale_mcp"]),
-    ("admin_mcp", [sys.executable, "-m", "mcp_server.admin_mcp"]),
+    ("goods_mcp", [sys.executable, "-m", "mcp_server.services.goods_mcp"]),
+    ("order_mcp", [sys.executable, "-m", "mcp_server.services.order_mcp"]),
+    ("ops_mcp", [sys.executable, "-m", "mcp_server.services.ops_mcp"]),
+    ("cart_mcp", [sys.executable, "-m", "mcp_server.services.cart_mcp"]),
+    ("user_mcp", [sys.executable, "-m", "mcp_server.services.user_mcp"]),
+    ("promotion_mcp", [sys.executable, "-m", "mcp_server.services.promoption_mcp"]),
+    ("aftersale_mcp", [sys.executable, "-m", "mcp_server.services.aftersale_mcp"]),
+    ("admin_mcp", [sys.executable, "-m", "mcp_server.services.admin_mcp"]),
 ]
 # FastAPI主服务
 FASTAPI_SERVICE = ("fastapi_main", [sys.executable, "-m", "main"])

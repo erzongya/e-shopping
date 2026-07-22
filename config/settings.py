@@ -36,10 +36,7 @@ class Settings(BaseSettings):
     # 服务配置
     HOST:str
     PORT:int
-    REDIS_HOST:str
-    REDIS_PORT:int
-    REDIS_DB:int
-    CHECKPOINT_KEY_PREFIX:str
+    REDIS_URL:str
     @property
     def is_dev(self) -> bool:
         return self.ENVIRONMENT == "dev"
@@ -58,6 +55,7 @@ class Settings(BaseSettings):
     def VECTOR_STORE_ROOT(self):
         """向量库存放目录绝对路径"""
         return os.path.join(BASE_DIR, "data", "vector_store")
+
 
 settings = Settings()
 if __name__ == '__main__':
