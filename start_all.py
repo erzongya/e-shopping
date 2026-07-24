@@ -6,17 +6,17 @@ from typing import List, Tuple
 # ===================== 服务配置 =====================
 # MCP模块列表 格式：(服务名, [python, -m, 包.模块名])
 MCP_SERVICE_LIST: List[Tuple[str, List[str]]] = [
-    ("goods_mcp", [sys.executable, "-m", "mcp_server.services.goods_mcp"]),
-    ("order_mcp", [sys.executable, "-m", "mcp_server.services.order_mcp"]),
-    ("ops_mcp", [sys.executable, "-m", "mcp_server.services.ops_mcp"]),
-    ("cart_mcp", [sys.executable, "-m", "mcp_server.services.cart_mcp"]),
-    ("user_mcp", [sys.executable, "-m", "mcp_server.services.user_mcp"]),
-    ("promotion_mcp", [sys.executable, "-m", "mcp_server.services.promoption_mcp"]),
-    ("aftersale_mcp", [sys.executable, "-m", "mcp_server.services.aftersale_mcp"]),
-    ("admin_mcp", [sys.executable, "-m", "mcp_server.services.admin_mcp"]),
+    ("goods_mcp", [sys.executable, "-m", "app.mcp_server.services.goods_mcp"]),
+    ("order_mcp", [sys.executable, "-m", "app.mcp_server.services.order_mcp"]),
+    ("ops_mcp", [sys.executable, "-m", "app.mcp_server.services.ops_mcp"]),
+    ("cart_mcp", [sys.executable, "-m", "app.mcp_server.services.cart_mcp"]),
+    ("user_mcp", [sys.executable, "-m", "app.mcp_server.services.user_mcp"]),
+    ("promotion_mcp", [sys.executable, "-m", "app.mcp_server.services.promotion_mcp"]),
+    ("aftersale_mcp", [sys.executable, "-m", "app.mcp_server.services.aftersale_mcp"]),
+    ("admin_mcp", [sys.executable, "-m", "app.mcp_server.services.admin_mcp"]),
 ]
 # FastAPI主服务
-FASTAPI_SERVICE = ("fastapi_main", [sys.executable, "-m", "main"])
+FASTAPI_SERVICE = ("fastapi_main", [sys.executable, "-m", "app.main"])
 
 # 存储所有子进程
 process_map = {}
@@ -62,7 +62,7 @@ async def main():
         mcp_tasks.append(task)
 
     # 等待10秒，给MCP充足时间绑定端口
-    wait_seconds = 3
+    wait_seconds = 8
     print(f"\n===== 等待{wait_seconds}秒，等待所有MCP服务就绪 =====")
     for sec in range(wait_seconds):
         await asyncio.sleep(1)
