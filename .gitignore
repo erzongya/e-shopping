@@ -1,15 +1,21 @@
 # 持久化数据目录
 data/
+/app/data/
+/app/logs/
+
 # Python缓存
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
 # 日志文件
 logs/
 *.log
+
 # 环境变量
 .env
+
 # IDE配置
 .idea/
 .vscode/
